@@ -5,6 +5,7 @@ const { db } = require('../util/admin');
 exports.getAllTodos = (request, response) => {
 	db
 		.collection('todos')
+		.where('username', '==', request.user.username)
 		.orderBy('createdAt', 'desc')
 		.get()
 		.then((data) => {
@@ -37,7 +38,8 @@ exports.postOneTodo = (request, response) => {
     const newTodoItem = {
         title: request.body.title,
         body: request.body.body,
-        createdAt: new Date().toISOString()
+		createdAt: new Date().toISOString(),
+		username: request.user.username
     }
     db
         .collection('todos')
@@ -69,8 +71,13 @@ exports.deleteTodo = (request, response) => {
         .catch((err) => {
             console.error(err);
             return response.status(500).json({ error: err.code });
-        });
+		});
+	if(doc.data().username !== request.user.username){
+		return response.status(403).json({error:"UnAuthorized"})
+	}
 };
+
+
 
 exports.editTodo = ( request, response ) => { 
     if(request.body.todoId || request.body.createdAt){
